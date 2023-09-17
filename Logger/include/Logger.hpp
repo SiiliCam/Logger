@@ -12,26 +12,25 @@
 static std::string getCurrentTimeWithMilliseconds() {
     using namespace std::chrono;
 
-    // Step 1: Capture the current time
+    // Capture the current time
     system_clock::time_point now = system_clock::now();
 
-    // Step 2: Separate into time and milliseconds
+    // Separate into time and milliseconds
     time_t now_tt = system_clock::to_time_t(now);
     auto duration_since_epoch = now.time_since_epoch();
     auto seconds_since_epoch = duration_cast<seconds>(duration_since_epoch);
     auto millis = duration_cast<milliseconds>(duration_since_epoch - seconds_since_epoch);
 
-    // Step 3: Convert time to string
+    // Convert time to string
     struct tm timeinfo;
     char buffer[80];
     localtime_s(&timeinfo, &now_tt);
     strftime(buffer, sizeof(buffer), "%H:%M:%S", &timeinfo);
 
-    // Step 4: Add milliseconds
+    // Add milliseconds with zero-padding
     std::ostringstream oss;
-    oss << buffer << "." << millis.count();
+    oss << buffer << "." << std::setw(3) << std::setfill('0') << millis.count();
 
-    // Step 5: Combine
     return oss.str();
 }
 namespace Logger {
