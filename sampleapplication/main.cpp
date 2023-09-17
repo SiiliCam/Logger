@@ -1,9 +1,12 @@
 #include "Logger.hpp"
 
+#include <thread>
+#include <chrono>
 
 int main() {
-	Logger::log_info("this is info");
+	Logger::log_info("this is info", 4, "value ", 4.555f);
 	Logger::log_warn("this is warn");
 	Logger::log_error("this is error");
+	std::this_thread::sleep_for(std::chrono::seconds(5));
 	return 0;
 }
