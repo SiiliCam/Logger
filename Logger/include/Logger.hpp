@@ -9,6 +9,31 @@
 #include <mutex>
 #include <condition_variable>
 
+static std::string getCurrentTimeWithMilliseconds() {
+    using namespace std::chrono;
+
+    // Step 1: Capture the current time
+    system_clock::time_point now = system_clock::now();
+
+    // Step 2: Separate into time and milliseconds
+    time_t now_tt = system_clock::to_time_t(now);
+    auto duration_since_epoch = now.time_since_epoch();
+    auto seconds_since_epoch = duration_cast<seconds>(duration_since_epoch);
+    auto millis = duration_cast<milliseconds>(duration_since_epoch - seconds_since_epoch);
+
+    // Step 3: Convert time to string
+    struct tm timeinfo;
+    char buffer[80];
+    localtime_s(&timeinfo, &now_tt);
+    strftime(buffer, sizeof(buffer), "%H:%M:%S", &timeinfo);
+
+    // Step 4: Add milliseconds
+    std::ostringstream oss;
+    oss << buffer << "." << millis.count();
+
+    // Step 5: Combine
+    return oss.str();
+}
 namespace Logger {
     enum class LogLevel {
         info,
@@ -33,8 +58,7 @@ namespace Logger {
     inline void write_log(const LogMessage& log_msg) {
         auto now = std::chrono::system_clock::now();
         auto time_t_now = std::chrono::system_clock::to_time_t(now);
-        std::string timestamp = std::ctime(&time_t_now);
-        timestamp.pop_back();  // Remove trailing newline
+        std::string timestamp = getCurrentTimeWithMilliseconds();
 
         std::string level_str;
         switch (log_msg.level) {
