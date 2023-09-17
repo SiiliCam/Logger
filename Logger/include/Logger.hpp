@@ -24,7 +24,13 @@ static std::string getCurrentTimeWithMilliseconds() {
     // Convert time to string
     struct tm timeinfo;
     char buffer[80];
+
+#ifdef _WIN32 // Windows-specific
     localtime_s(&timeinfo, &now_tt);
+#else // Unix-like systems
+    localtime_r(&now_tt, &timeinfo);
+#endif
+
     strftime(buffer, sizeof(buffer), "%H:%M:%S", &timeinfo);
 
     // Add milliseconds with zero-padding
