@@ -3,7 +3,14 @@
 add_library(Logger INTERFACE)
 
 # Link Boost libraries to Logger
-target_link_libraries(Logger INTERFACE Boost::system Boost::log Boost::log_setup)
+if (ANDROID)
+  target_link_libraries(Logger INTERFACE 
+                          ${Boost_LIBRARY_DIR}/libboost_system.a 
+                          ${Boost_LIBRARY_DIR}/libboost_log.a 
+                          ${Boost_LIBRARY_DIR}/libboost_log_setup.a)
+else()
+  target_link_libraries(Logger INTERFACE Boost::system Boost::log Boost::log_setup)
+endif()
 
 # Set output directories
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
