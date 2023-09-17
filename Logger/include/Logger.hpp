@@ -30,7 +30,7 @@ namespace Logger {
     static std::queue<LogMessage> log_queue;
     static std::ofstream log_file;
 
-    void write_log(const LogMessage& log_msg) {
+    inline void write_log(const LogMessage& log_msg) {
         auto now = std::chrono::system_clock::now();
         auto time_t_now = std::chrono::system_clock::to_time_t(now);
         std::string timestamp = std::ctime(&time_t_now);
@@ -60,7 +60,7 @@ namespace Logger {
         }
     }
 
-    void logging_thread() {
+    inline void logging_thread() {
         while (is_running) {
             std::unique_lock<std::mutex> lock(queue_mutex);
             condition_var.wait(lock, [] { return !log_queue.empty() || !is_running; });
@@ -73,26 +73,26 @@ namespace Logger {
         }
     }
 
-    void init_logging(const std::string& file) {
+    inline void init_logging(const std::string& file) {
         log_file.open(file, std::ios::out | std::ios::app);
         initialized = true;
         std::thread log_thread(logging_thread);
         log_thread.detach();
     }
 
-    void init_console_logging() {
+    inline void init_console_logging() {
         initialized = true;
         std::thread log_thread(logging_thread);
         log_thread.detach();
     }
 
-    void shutdown() {
+    inline void shutdown() {
         is_running = false;
         condition_var.notify_one();
     }
 
     template<typename... Args>
-    void enqueue_message(LogLevel level, Args... args) {
+    inline void enqueue_message(LogLevel level, Args... args) {
         std::ostringstream stream;
         ((stream << args << " "), ...);
         LogMessage log_msg{ level, stream.str() };
@@ -103,7 +103,7 @@ namespace Logger {
     }
 
     template<typename... Args>
-    void log_info(Args... args) {
+    inline void log_info(Args... args) {
         if (!initialized) {
             init_console_logging();
         }
@@ -111,7 +111,7 @@ namespace Logger {
     }
 
     template<typename... Args>
-    void log_error(Args... args) {
+    inline void log_error(Args... args) {
         if (!initialized) {
             init_console_logging();
         }
@@ -119,7 +119,7 @@ namespace Logger {
     }
 
     template<typename... Args>
-    void log_warn(Args... args) {
+    inline void log_warn(Args... args) {
         if (!initialized) {
             init_console_logging();
         }
