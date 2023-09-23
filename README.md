@@ -1,3 +1,3 @@
 # Logger
 
-simple logger application that allows to write into files sinks
+simple logger application that allows to write logs into console and a log file
