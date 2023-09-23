@@ -66,28 +66,39 @@ namespace Logger {
         std::string timestamp = getCurrentTimeWithMilliseconds();
 
         std::string level_str;
+        std::string color_code;
+
         switch (log_msg.level) {
         case LogLevel::info:
             level_str = "info";
+            color_code = "\033[32m";  // ANSI code for green
             break;
         case LogLevel::error:
             level_str = "error";
+            color_code = "\033[31m";  // ANSI code for red
             break;
         case LogLevel::warning:
             level_str = "warning";
+            color_code = "\033[33m";  // ANSI code for yellow
             break;
         default:
             level_str = "trace";
+            color_code = "\033[0m";  // ANSI code for default
             break;
         }
 
-        std::string log_entry = "[" + timestamp + "][" + level_str + "] " + log_msg.message + "\n";
+        std::string log_entry = "[" + timestamp + "][" + level_str + "]\t" + log_msg.message + "\n";
 
-        std::cout << log_entry;  // Console log
+        // Bold for timestamp is \033[1m and \033[0m to reset
+        std::string colored_log_entry = "\033[1m[" + timestamp + "]\033[0m[" + color_code + level_str + "\033[0m]\t" + log_msg.message + "\n";
+
+        std::cout << colored_log_entry;  // Colored and bolded console log
+
         if (log_file.is_open()) {
-            log_file << log_entry;  // File log
+            log_file << log_entry;  // File log (uncolored)
         }
     }
+
 
     inline void logging_thread() {
         while (is_running) {
