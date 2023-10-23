@@ -8,6 +8,7 @@
 #include <thread>
 #include <mutex>
 #include <condition_variable>
+#include <functional>
 
 static std::string getCurrentTimeWithMilliseconds() {
     using namespace std::chrono;
@@ -53,6 +54,7 @@ namespace Logger {
         LogLevel level;
         std::string message;
     };
+    using LogFunction = std::function<void(const std::string&)>;
 
     class Logger {
     private:
@@ -63,8 +65,8 @@ namespace Logger {
         std::condition_variable condition_var;
         std::queue<LogMessage> log_queue;
         std::ofstream log_file;
+        LogFunction log_function;
 
-        Logger() {}
 
         template<typename... Args>
         void enqueue_message(LogLevel level, Args... args) {
@@ -78,11 +80,15 @@ namespace Logger {
         }
 
     public:
+        Logger() : log_function([](const std::string& msg) { std::cout << msg << std::endl; }) {}
+
         static Logger& getInstance() {
             static Logger instance;
             return instance;
         }
-
+        void setLogFunction(LogFunction func) {
+            log_function = func;
+        }
         void init_logging(const std::string& file) {
             log_file.open(file, std::ios::out | std::ios::app);
             initialized = true;
@@ -119,9 +125,8 @@ namespace Logger {
             std::string log_entry = "[" + timestamp + "][" + level_str + "]\t" + log_msg.message + "\n";
 
             // Bold for timestamp is \033[1m and \033[0m to reset
-            std::string colored_log_entry = "\033[1m[" + timestamp + "]\033[0m[" + color_code + level_str + "\033[0m]\t" + log_msg.message + "\n";
-
-            std::cout << colored_log_entry;  // Colored and bolded console log
+            std::string colored_log_entry = "\033[1m[" + timestamp + "]\033[0m[" + color_code + level_str + "\033[0m]\t" + log_msg.message;
+            log_function(colored_log_entry);
 
             if (log_file.is_open()) {
                 log_file << log_entry;  // File log (uncolored)
