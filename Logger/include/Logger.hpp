@@ -162,7 +162,7 @@ namespace Logger {
         template<typename... Args>
         inline void log_warn(Args... args) {
             if (!initialized) {
-                init_console_logging("default.log");
+                init_logging("default.log");
             }
             enqueue_message(LogLevel::warning, args...);
         }
