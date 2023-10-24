@@ -9,6 +9,7 @@
 #include <mutex>
 #include <condition_variable>
 #include <functional>
+#include <iomanip>
 
 static std::string getCurrentTimeWithMilliseconds() {
     using namespace std::chrono;
