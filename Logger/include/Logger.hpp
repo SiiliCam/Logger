@@ -60,9 +60,10 @@ namespace Logger {
     class Logger {
     private:
         bool initialized = false;
-        bool is_running = true;
+        std::atomic_bool is_running;
         std::mutex log_mutex;
         std::mutex queue_mutex;
+        std::thread m_loggingThread;
         std::condition_variable condition_var;
         std::queue<LogMessage> log_queue;
         std::ofstream log_file;
@@ -81,8 +82,16 @@ namespace Logger {
         }
 
     public:
-        Logger() : log_function([](const std::string& msg) { std::cout << msg << std::endl; }) {}
-
+        Logger() : is_running(true), log_function([](const std::string& msg) { std::cout << msg << std::endl; }) {}
+        ~Logger() {
+            is_running = false;
+            condition_var.notify_one();
+            std::cout << "joining logging thread" << std::endl;
+            if (m_loggingThread.joinable()) {
+                m_loggingThread.join();
+            }
+            std::cout << "logging thread joined" << std::endl;
+        }
         static Logger& getInstance() {
             static Logger instance;
             return instance;
@@ -93,8 +102,7 @@ namespace Logger {
         void init_logging(const std::string& file) {
             log_file.open(file, std::ios::out | std::ios::app);
             initialized = true;
-            std::thread log_thread(&Logger::logging_thread, this);
-            log_thread.detach();
+            m_loggingThread = std::thread(&Logger::logging_thread, this);
         }
         void write_log(const LogMessage& log_msg) {
             auto now = std::chrono::system_clock::now();
@@ -134,17 +142,24 @@ namespace Logger {
                 log_file.flush();
             }
             else {
-                std::cout << "log file is not open";
+                std::cout << "log file is not open" << std::endl;
             }
         }
         void logging_thread() {
-            while (is_running) {
+            while (is_running.load()) {
                 std::unique_lock<std::mutex> lock(queue_mutex);
-                condition_var.wait(lock, [this] { return !log_queue.empty() || !is_running; });
-                while (!log_queue.empty()) {
-                    LogMessage log_msg = log_queue.front();
-                    log_queue.pop();
-                    write_log(log_msg);
+                condition_var.wait(lock, [this] { return !log_queue.empty() || !is_running.load(); });
+                while (!log_queue.empty() && is_running.load()) {
+                    try {
+
+                        LogMessage log_msg = log_queue.front();
+                        log_queue.pop();
+                        write_log(log_msg);
+                    }
+                    catch (const std::exception& e) {
+                        std::cout << "logger error " << e.what()  << std::endl;
+                        break;
+                    }
                 }
                 lock.unlock();
             }
